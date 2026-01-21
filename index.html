@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium Workspace Planner</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&family=Mitr:wght@300;400;600&display=swap');
+        
+        :root {
+            --bg-main: #F1F5F9;
+            --text-main: #1A1C21;
+            --card-bg: rgba(255, 255, 255, 0.8);
+            --card-border: rgba(255, 255, 255, 1);
+            --nav-bg: rgba(255, 255, 255, 0.6);
+        }
+
+        .dark-mode {
+            --bg-main: #0F172A;
+            --text-main: #F1F5F9;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --card-border: rgba(255, 255, 255, 0.05);
+            --nav-bg: rgba(15, 23, 42, 0.8);
+        }
+
+        body { 
+            font-family: 'Plus Jakarta Sans', 'Mitr', sans-serif; 
+            -webkit-font-smoothing: antialiased; 
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.4s ease;
+        }
+
+        .custom-scrollbar-dark::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar-dark::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); }
+        .custom-scrollbar-dark::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 10px; }
+        
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
+
+        .glass-card {
+            background-color: var(--card-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--card-border);
+            transition: all 0.4s ease;
+        }
+
+        .nav-glass {
+            background-color: var(--nav-bg);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--card-border);
+        }
+    </style>
+</head>
+<body class="">
+
+    <div id="app" class="flex flex-col min-h-screen">
+        <!-- Top Navigation with Profiles -->
+        <nav class="h-16 nav-glass flex items-end px-8 gap-1 z-30 pt-2 sticky top-0">
+            <div id="tabs-container" class="flex items-end gap-1 overflow-x-auto"></div>
+            <button onclick="addNewProfile()" class="mb-1 ml-2 p-2 bg-slate-500/10 hover:bg-slate-500/20 text-slate-500 rounded-lg transition-all" title="Add Profile">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+            </button>
+        </nav>
+
+        <main class="flex-1 overflow-y-auto">
+            <!-- Banner Section -->
+            <div class="relative h-72 overflow-hidden" id="banner-section">
+                <img id="profile-banner" src="" class="w-full h-full object-cover transition-all duration-700" alt="Banner">
+                <div class="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-[var(--bg-main)]"></div>
+                
+                <div class="absolute bottom-10 left-16 flex flex-col gap-1 animate-fade-in">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span id="workspace-tag" class="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-black text-white uppercase tracking-widest border border-white/20">Workspace</span>
+                        <span id="simulator-tag" class="hidden px-3 py-1 bg-amber-400 rounded-full text-[10px] font-black text-amber-900 uppercase tracking-widest">Simulator Active</span>
+                    </div>
+                    <div class="flex items-baseline gap-4">
+                        <h2 class="text-5xl font-black tracking-tighter drop-shadow-sm" id="date-en-display"></h2>
+                        <div class="h-10 w-[2px] bg-slate-500/20 rotate-12 mx-2"></div>
+                        <span class="text-3xl font-bold opacity-70 tracking-tight" id="date-th-display"></span>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="absolute top-10 right-16 flex gap-3">
+                    <button id="theme-toggle" onclick="toggleDarkMode()" class="p-4 glass-card rounded-full transition-all shadow-xl text-slate-400 hover:text-amber-400">
+                        <i data-lucide="moon" id="theme-icon"></i>
+                    </button>
+                    <button onclick="openSettings()" class="p-4 glass-card rounded-full transition-all shadow-xl text-slate-400 hover:text-slate-900 dark:hover:text-white">
+                        <i data-lucide="settings-2"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Main Grid -->
+            <div class="px-16 pb-20 -mt-8 grid grid-cols-1 xl:grid-cols-12 gap-8 relative z-10">
+                <section class="xl:col-span-7 flex flex-col gap-8">
+                    <!-- Calendar Card -->
+                    <div class="glass-card rounded-[48px] p-10 shadow-sm transition-all hover:shadow-md">
+                        <div class="flex items-center justify-between mb-12">
+                            <button onclick="changeMonth(-1)" class="p-3 hover:bg-slate-500/10 rounded-2xl text-slate-400 transition-all hover:text-slate-900 dark:hover:text-white"><i data-lucide="chevron-left"></i></button>
+                            <div class="text-center">
+                                <h3 class="text-xl font-black tracking-tight" id="calendar-header"></h3>
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]" id="calendar-year-header"></p>
+                            </div>
+                            <button onclick="changeMonth(1)" class="p-3 hover:bg-slate-500/10 rounded-2xl text-slate-400 transition-all hover:text-slate-900 dark:hover:text-white"><i data-lucide="chevron-right"></i></button>
+                        </div>
+                        <div id="calendar-body" class="calendar-grid"></div>
+                    </div>
+
+                    <!-- Enhanced Notes Card -->
+                    <div class="glass-card rounded-[48px] p-10 shadow-sm flex flex-col">
+                        <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
+                            <div class="flex items-center gap-4">
+                                <div class="p-4 bg-amber-400/10 text-amber-600 rounded-[24px]"><i data-lucide="sticky-note"></i></div>
+                                <div>
+                                    <h3 class="text-xl font-black tracking-tight">Journal & Notes</h3>
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">บันทึกและความคิด</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 glass-card p-2 rounded-2xl border shadow-sm">
+                                <div class="flex items-center gap-1 border-r border-slate-500/20 pr-2">
+                                    <span class="text-[9px] font-bold text-slate-400 uppercase mr-1">Text</span>
+                                    <input type="color" id="note-text-color" value="#1e293b" class="w-6 h-6 border-none bg-transparent cursor-pointer">
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <span class="text-[9px] font-bold text-slate-400 uppercase mr-1">Bg</span>
+                                    <input type="color" id="note-bg-color" value="#ffffff" class="w-6 h-6 border-none bg-transparent cursor-pointer">
+                                </div>
+                            </div>
+                        </div>
+                        <textarea id="daily-note-area" oninput="saveNote()" placeholder="เริ่มเขียนบันทึกของคุณที่นี่..." 
+                            class="w-full h-72 rounded-[32px] p-10 text-lg font-medium focus:outline-none transition-all resize-none shadow-inner border-none bg-transparent leading-relaxed"></textarea>
+                    </div>
+                </section>
+
+                <aside class="xl:col-span-5">
+                    <!-- Timeline Sidebar -->
+                    <div class="bg-slate-900 dark:bg-black rounded-[56px] p-10 text-white shadow-2xl sticky top-20 h-[calc(100vh-120px)] flex flex-col border border-white/5 overflow-hidden transition-colors duration-500">
+                        <!-- Simulation Controls -->
+                        <div class="mb-8 p-6 rounded-[32px] bg-white/5 border border-white/10">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="p-2 bg-indigo-500/20 text-indigo-400 rounded-xl"><i data-lucide="beaker" class="w-4 h-4"></i></div>
+                                    <span class="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-300">Simulation</span>
+                                </div>
+                                <button onclick="toggleTestMode()" id="test-mode-toggle" class="relative w-12 h-6 rounded-full bg-slate-700 transition-all">
+                                    <div id="toggle-circle" class="absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-all"></div>
+                                </button>
+                            </div>
+                            <div id="sim-slider-container" class="hidden space-y-4">
+                                <input type="range" min="0" max="23" value="12" id="sim-hour" oninput="updateSimHour(this.value)" class="w-full h-1.5 bg-slate-800 rounded-full appearance-none cursor-pointer accent-indigo-400">
+                                <div class="text-[10px] font-black text-indigo-400/80 uppercase tracking-widest text-center" id="sim-time-display">Set Time: 12:00</div>
+                            </div>
+                        </div>
+
+                        <div id="timeline-list" class="flex-1 overflow-y-auto pr-4 space-y-4 custom-scrollbar-dark px-2"></div>
+                    </div>
+                </aside>
+            </div>
+        </main>
+
+        <!-- Settings Modal -->
+        <div id="settings-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xl z-[100] flex items-center justify-center p-6">
+            <div class="bg-white dark:bg-slate-900 w-full max-w-xl rounded-[56px] p-12 shadow-2xl overflow-hidden relative">
+                <div id="modal-accent" class="absolute top-0 left-0 w-full h-2 bg-indigo-600"></div>
+                <div class="flex justify-between items-center mb-10 text-slate-900 dark:text-white">
+                    <div>
+                        <h3 class="text-3xl font-black">Profile Settings</h3>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">ปรับแต่งพื้นที่ทำงานของคุณ</p>
+                    </div>
+                    <button onclick="closeSettings()" class="p-4 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"><i data-lucide="x"></i></button>
+                </div>
+                <div class="space-y-8 max-h-[60vh] overflow-y-auto pr-4 custom-scrollbar-dark">
+                    <div>
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 mb-2 block">Display Name</label>
+                        <input type="text" id="edit-name" class="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-indigo-100 rounded-[24px] px-8 py-5 text-lg font-bold focus:outline-none transition-all dark:text-white" placeholder="ชื่อโปรไฟล์">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 mb-2 block">Banner Image URL</label>
+                        <input type="text" id="edit-banner" class="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-indigo-100 rounded-[24px] px-8 py-5 text-sm font-medium focus:outline-none transition-all dark:text-white" placeholder="https://images.unsplash.com/...">
+                    </div>
+                    <div class="grid grid-cols-2 gap-6">
+                        <div>
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 mb-2 block">Theme Color</label>
+                            <div class="flex items-center gap-4 bg-slate-50 dark:bg-slate-800 p-4 rounded-[24px]">
+                                <input type="color" id="edit-color" class="w-12 h-12 border-none bg-transparent cursor-pointer">
+                                <span class="text-sm font-bold text-slate-400 uppercase" id="color-hex-display">#000000</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="pt-4 flex gap-4">
+                        <button onclick="deleteProfile()" class="flex-1 py-5 bg-rose-50 dark:bg-rose-900/20 text-rose-500 rounded-[28px] text-base font-black transition-all">ลบโปรไฟล์</button>
+                        <button onclick="saveSettings()" class="flex-[2] py-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-[28px] text-base font-black shadow-lg shadow-indigo-200 transition-all">บันทึกการเปลี่ยนแปลง</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let profiles = [
+            { id: 'p1', name: 'คุณบอล', themeColor: '#6366f1', banner: 'https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&w=1200&q=80' }
+        ];
+        let activeProfileIdx = 0;
+        let currentDate = new Date();
+        let selectedDate = new Date();
+        let dailyTasks = {};
+        let dailyNotes = {};
+        let isTestMode = false;
+        let mockTimeHour = new Date().getHours();
+        let isDarkMode = false;
+
+        window.onload = () => { 
+            // Load theme
+            if (localStorage.getItem('theme') === 'dark') toggleDarkMode(true);
+            renderAll(); 
+            lucide.createIcons(); 
+            setInterval(() => { if(!isTestMode) updateCurrentHighlights(); }, 60000); 
+            
+            document.getElementById('note-text-color').oninput = updateNoteStyle;
+            document.getElementById('note-bg-color').oninput = updateNoteStyle;
+            document.getElementById('edit-color').oninput = (e) => {
+                document.getElementById('color-hex-display').innerText = e.target.value;
+            };
+        };
+
+        function toggleDarkMode(force = null) {
+            isDarkMode = force !== null ? force : !isDarkMode;
+            document.body.classList.toggle('dark-mode', isDarkMode);
+            const icon = document.getElementById('theme-icon');
+            icon.setAttribute('data-lucide', isDarkMode ? 'sun' : 'moon');
+            localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+            lucide.createIcons();
+            renderCalendar(); // Refresh calendar for border/text updates
+        }
+
+        function renderAll() {
+            renderTabs();
+            renderProfileHeader();
+            renderCalendar();
+            renderTimeline();
+            renderNote();
+            lucide.createIcons();
+        }
+
+        function addNewProfile() {
+            const newId = 'p' + Date.now();
+            profiles.push({
+                id: newId,
+                name: 'โปรไฟล์ใหม่',
+                themeColor: '#10b981',
+                banner: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1200&q=80'
+            });
+            activeProfileIdx = profiles.length - 1;
+            renderAll();
+            openSettings();
+        }
+
+        function deleteProfile() {
+            if (profiles.length <= 1) return;
+            profiles.splice(activeProfileIdx, 1);
+            activeProfileIdx = 0;
+            closeSettings();
+            renderAll();
+        }
+
+        function renderTabs() {
+            const container = document.getElementById('tabs-container');
+            container.innerHTML = '';
+            profiles.forEach((p, idx) => {
+                const btn = document.createElement('button');
+                btn.className = `relative h-11 px-6 flex items-center gap-2.5 rounded-t-2xl transition-all text-xs font-black ${activeProfileIdx === idx ? 'bg-[var(--card-bg)] text-[var(--text-main)] shadow-sm z-10' : 'text-slate-400 hover:text-slate-600'}`;
+                btn.onclick = () => { activeProfileIdx = idx; renderAll(); };
+                btn.innerHTML = `<div class="w-2 h-2 rounded-full" style="background-color: ${p.themeColor}"></div><span>${p.name}</span>`;
+                container.appendChild(btn);
+            });
+        }
+
+        function renderProfileHeader() {
+            const p = profiles[activeProfileIdx];
+            document.getElementById('profile-banner').src = p.banner;
+            document.getElementById('workspace-tag').innerText = `Workspace: ${p.name}`;
+            document.getElementById('modal-accent').style.backgroundColor = p.themeColor;
+            
+            const mNamesEN = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            const mNamesTH = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+            
+            document.getElementById('date-en-display').innerText = mNamesEN[currentDate.getMonth()] + ' ' + currentDate.getFullYear();
+            document.getElementById('date-th-display').innerText = mNamesTH[currentDate.getMonth()] + ' ' + (currentDate.getFullYear() + 543);
+            document.getElementById('calendar-header').innerText = mNamesEN[currentDate.getMonth()];
+            document.getElementById('calendar-year-header').innerText = currentDate.getFullYear();
+        }
+
+        function getEffectiveTask(profileId, dateStr, hourInt) {
+            for (let h = hourInt; h >= 0; h--) {
+                const key = `${profileId}-${dateStr}-${h.toString().padStart(2, '0')}:00`;
+                const task = dailyTasks[key];
+                if (task && task.content?.trim()) {
+                    return { ...task, hour: h, isForwarded: h !== hourInt };
+                }
+            }
+            return null;
+        }
+
+        function renderCalendar() {
+            const container = document.getElementById('calendar-body');
+            container.innerHTML = '';
+            const p = profiles[activeProfileIdx];
+            const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay();
+            const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
+            const currentHour = isTestMode ? parseInt(mockTimeHour) : new Date().getHours();
+
+            for (let i = 0; i < firstDay; i++) container.appendChild(document.createElement('div'));
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dObj = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+                const dStr = dObj.toDateString();
+                const effective = getEffectiveTask(p.id, dStr, (new Date().toDateString() === dStr) ? currentHour : 23);
+                
+                const btn = document.createElement('button');
+                btn.className = `h-32 p-4 rounded-[32px] border-2 transition-all text-left group ${selectedDate.toDateString() === dStr ? 'bg-[var(--bg-main)] border-slate-900 dark:border-indigo-400 shadow-xl scale-[1.03]' : 'bg-white/5 border-transparent hover:bg-white/10'}`;
+                btn.onclick = () => { selectedDate = dObj; renderAll(); };
+                
+                let badgeStyle = `background: ${effective?.bg || p.themeColor}; color: ${effective?.color || '#ffffff'}`;
+                
+                btn.innerHTML = `
+                    <div class="text-sm font-black mb-2 ${selectedDate.toDateString() === dStr ? 'text-[var(--text-main)]' : 'text-slate-500'}">${day}</div>
+                    <div class="flex-1 flex items-center overflow-hidden">
+                        ${effective ? `<div class="w-full text-[10px] font-bold py-1.5 px-2 rounded-xl text-center line-clamp-2 shadow-sm animate-fade-in" style="${badgeStyle}">${effective.content}</div>` : ''}
+                    </div>
+                `;
+                container.appendChild(btn);
+            }
+        }
+
+        function renderTimeline() {
+            const container = document.getElementById('timeline-list');
+            container.innerHTML = '';
+            const p = profiles[activeProfileIdx];
+            const dStr = selectedDate.toDateString();
+            const currentHour = isTestMode ? parseInt(mockTimeHour) : new Date().getHours();
+
+            for(let i=0; i<24; i++) {
+                const hStr = `${i.toString().padStart(2, '0')}:00`;
+                const key = `${p.id}-${dStr}-${hStr}`;
+                const task = dailyTasks[key] || { content: '', color: '#ffffff', bg: p.themeColor };
+                const isCurrent = (new Date().toDateString() === dStr) && i === currentHour;
+                
+                const div = document.createElement('div');
+                div.id = `timeline-row-${i}`;
+                div.className = `flex gap-5 p-5 rounded-[32px] transition-all border ${isCurrent ? 'bg-indigo-600/20 border-indigo-500/40 shadow-lg' : 'border-transparent'}`;
+                
+                div.innerHTML = `
+                    <div class="text-[11px] font-black w-10 text-right pt-1.5 ${isCurrent ? 'text-indigo-400' : 'text-slate-500'}">${hStr}</div>
+                    <div class="flex-1">
+                        <input type="text" id="input-${i}" value="${task.content}" 
+                            oninput="updateTaskProperty(${i}, 'content', this.value)"
+                            placeholder="กิจกรรม..."
+                            style="color: ${task.color}"
+                            class="w-full bg-transparent text-sm font-bold focus:outline-none placeholder:text-slate-700">
+                        <div class="flex items-center gap-4 mt-2">
+                            <div id="forward-label-${i}" class="text-[9px] text-slate-500 font-bold italic flex-1 truncate"></div>
+                            <div class="flex items-center gap-3">
+                                <input type="color" value="${task.color || '#ffffff'}" onchange="updateTaskProperty(${i}, 'color', this.value)" class="w-5 h-5 rounded-full border-none cursor-pointer bg-transparent">
+                                <input type="color" value="${task.bg || p.themeColor}" onchange="updateTaskProperty(${i}, 'bg', this.value)" class="w-5 h-5 rounded-full border-none cursor-pointer bg-transparent">
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(div);
+            }
+            updateForwardLabels();
+        }
+
+        function updateTaskProperty(hour, prop, value) {
+            const p = profiles[activeProfileIdx];
+            const dStr = selectedDate.toDateString();
+            const key = `${p.id}-${dStr}-${hour.toString().padStart(2, '0')}:00`;
+            if (!dailyTasks[key]) dailyTasks[key] = { content: '', color: '#ffffff', bg: p.themeColor };
+            dailyTasks[key][prop] = value;
+            if (prop === 'color') document.getElementById(`input-${hour}`).style.color = value;
+            updateForwardLabels();
+            debouncedRenderCalendar();
+        }
+
+        function updateForwardLabels() {
+            const p = profiles[activeProfileIdx];
+            const dStr = selectedDate.toDateString();
+            for (let i = 0; i < 24; i++) {
+                const label = document.getElementById(`forward-label-${i}`);
+                const input = document.getElementById(`input-${i}`);
+                const effective = getEffectiveTask(p.id, dStr, i);
+                if (effective && effective.isForwarded) {
+                    label.innerText = `ส่งต่อจาก ${effective.hour}:00: ${effective.content}`;
+                    input.classList.add('opacity-30');
+                    input.style.color = effective.color;
+                } else {
+                    label.innerText = '';
+                    input.classList.remove('opacity-30');
+                    const key = `${p.id}-${dStr}-${i.toString().padStart(2, '0')}:00`;
+                    input.style.color = dailyTasks[key]?.color || '#ffffff';
+                }
+            }
+        }
+
+        let calendarTimeout;
+        function debouncedRenderCalendar() {
+            clearTimeout(calendarTimeout);
+            calendarTimeout = setTimeout(renderCalendar, 400);
+        }
+
+        function saveNote() {
+            const p = profiles[activeProfileIdx];
+            const key = `${p.id}-${selectedDate.toDateString()}-note`;
+            dailyNotes[key] = { 
+                content: document.getElementById('daily-note-area').value,
+                color: document.getElementById('note-text-color').value,
+                bg: document.getElementById('note-bg-color').value
+            };
+        }
+
+        function updateNoteStyle() {
+            const area = document.getElementById('daily-note-area');
+            area.style.color = document.getElementById('note-text-color').value;
+            area.style.backgroundColor = document.getElementById('note-bg-color').value;
+            saveNote();
+        }
+
+        function renderNote() {
+            const p = profiles[activeProfileIdx];
+            const key = `${p.id}-${selectedDate.toDateString()}-note`;
+            const noteData = dailyNotes[key] || { content: '', color: isDarkMode ? '#f1f5f9' : '#1e293b', bg: 'transparent' };
+            const area = document.getElementById('daily-note-area');
+            area.value = noteData.content;
+            area.style.color = noteData.color;
+            area.style.backgroundColor = noteData.bg;
+            document.getElementById('note-text-color').value = noteData.color;
+            document.getElementById('note-bg-color').value = noteData.bg === 'transparent' ? (isDarkMode ? '#0f172a' : '#ffffff') : noteData.bg;
+        }
+
+        function updateCurrentHighlights() {
+            const currentHour = isTestMode ? parseInt(mockTimeHour) : new Date().getHours();
+            const dStr = new Date().toDateString();
+            if (selectedDate.toDateString() === dStr) {
+                for (let i = 0; i < 24; i++) {
+                    const row = document.getElementById(`timeline-row-${i}`);
+                    if (row) {
+                        if (i === currentHour) row.classList.add('bg-indigo-600/20', 'border-indigo-500/40', 'shadow-lg');
+                        else row.classList.remove('bg-indigo-600/20', 'border-indigo-500/40', 'shadow-lg');
+                    }
+                }
+            }
+        }
+
+        function updateSimHour(val) {
+            mockTimeHour = val;
+            document.getElementById('sim-time-display').innerText = `Set Time: ${val.toString().padStart(2, '0')}:00`;
+            updateCurrentHighlights();
+            renderCalendar();
+            updateForwardLabels();
+        }
+
+        function toggleTestMode() {
+            isTestMode = !isTestMode;
+            document.getElementById('test-mode-toggle').classList.toggle('bg-indigo-500', isTestMode);
+            document.getElementById('toggle-circle').style.left = isTestMode ? '28px' : '4px';
+            document.getElementById('sim-slider-container').classList.toggle('hidden', !isTestMode);
+            updateCurrentHighlights();
+            renderCalendar();
+        }
+
+        function changeMonth(dir) { currentDate.setMonth(currentDate.getMonth() + dir); renderAll(); }
+        function openSettings() { 
+            const p = profiles[activeProfileIdx];
+            document.getElementById('edit-name').value = p.name;
+            document.getElementById('edit-banner').value = p.banner;
+            document.getElementById('edit-color').value = p.themeColor;
+            document.getElementById('color-hex-display').innerText = p.themeColor;
+            document.getElementById('settings-modal').classList.remove('hidden'); 
+        }
+        function closeSettings() { document.getElementById('settings-modal').classList.add('hidden'); }
+        function saveSettings() { 
+            const p = profiles[activeProfileIdx];
+            p.name = document.getElementById('edit-name').value;
+            p.banner = document.getElementById('edit-banner').value;
+            p.themeColor = document.getElementById('edit-color').value;
+            closeSettings(); 
+            renderAll(); 
+        }
+    </script>
+</body>
+</html>
