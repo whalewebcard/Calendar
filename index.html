@@ -54,15 +54,73 @@
             backdrop-filter: blur(12px);
             border-bottom: 1px solid var(--card-border);
         }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 6px;
+            cursor: pointer;
+            background: rgba(0,0,0,0.1);
+            border-radius: 10px;
+        }
+        .dark-mode input[type=range]::-webkit-slider-runnable-track {
+            background: rgba(255,255,255,0.1);
+        }
+        input[type=range]::-webkit-slider-thumb {
+            height: 18px;
+            width: 18px;
+            border-radius: 50%;
+            background: #6366f1;
+            cursor: pointer;
+            -webkit-appearance: none;
+            margin-top: -6px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+
+        /* Preview Window Styling */
+        .preview-window {
+            width: 100%;
+            height: 120px;
+            border-radius: 20px;
+            overflow: hidden;
+            position: relative;
+            background: #eee;
+            border: 2px solid rgba(99, 102, 241, 0.2);
+        }
+        .preview-window img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: object-position 0.1s ease-out;
+        }
+        .preview-overlay {
+            position: absolute;
+            inset: 0;
+            border: 1px dashed rgba(255,255,255,0.5);
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .preview-overlay::before {
+            content: '';
+            width: 100%;
+            height: 1px;
+            background: rgba(255,255,255,0.3);
+            position: absolute;
+        }
     </style>
 </head>
 <body class="">
 
     <div id="app" class="flex flex-col min-h-screen">
-        <!-- Top Navigation with Profiles -->
+        <!-- Top Navigation -->
         <nav class="h-16 nav-glass flex items-end px-8 gap-1 z-30 pt-2 sticky top-0">
             <div id="tabs-container" class="flex items-end gap-1 overflow-x-auto"></div>
-            <button onclick="addNewProfile()" class="mb-1 ml-2 p-2 bg-slate-500/10 hover:bg-slate-500/20 text-slate-500 rounded-lg transition-all" title="Add Profile">
+            <button onclick="addNewProfile()" class="mb-1 ml-2 p-2 bg-slate-500/10 hover:bg-slate-500/20 text-slate-500 rounded-lg transition-all" title="เพิ่มโปรไฟล์">
                 <i data-lucide="plus" class="w-4 h-4"></i>
             </button>
         </nav>
@@ -70,7 +128,7 @@
         <main class="flex-1 overflow-y-auto">
             <!-- Banner Section -->
             <div class="relative h-72 overflow-hidden" id="banner-section">
-                <img id="profile-banner" src="" class="w-full h-full object-cover transition-all duration-700" alt="Banner">
+                <img id="profile-banner" src="" class="w-full h-full object-cover transition-all duration-700" alt="Banner" style="object-position: center 50%;">
                 <div class="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-[var(--bg-main)]"></div>
                 
                 <div class="absolute bottom-10 left-16 flex flex-col gap-1 animate-fade-in">
@@ -96,10 +154,10 @@
                 </div>
             </div>
 
-            <!-- Main Grid -->
+            <!-- Main Content Area -->
             <div class="px-16 pb-20 -mt-8 grid grid-cols-1 xl:grid-cols-12 gap-8 relative z-10">
                 <section class="xl:col-span-7 flex flex-col gap-8">
-                    <!-- Calendar Card -->
+                    <!-- Calendar -->
                     <div class="glass-card rounded-[48px] p-10 shadow-sm transition-all hover:shadow-md">
                         <div class="flex items-center justify-between mb-12">
                             <button onclick="changeMonth(-1)" class="p-3 hover:bg-slate-500/10 rounded-2xl text-slate-400 transition-all hover:text-slate-900 dark:hover:text-white"><i data-lucide="chevron-left"></i></button>
@@ -112,7 +170,7 @@
                         <div id="calendar-body" class="calendar-grid"></div>
                     </div>
 
-                    <!-- Enhanced Notes Card -->
+                    <!-- Journal -->
                     <div class="glass-card rounded-[48px] p-10 shadow-sm flex flex-col">
                         <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
                             <div class="flex items-center gap-4">
@@ -138,10 +196,9 @@
                     </div>
                 </section>
 
+                <!-- Timeline Sidebar -->
                 <aside class="xl:col-span-5">
-                    <!-- Timeline Sidebar -->
                     <div class="bg-slate-900 dark:bg-black rounded-[56px] p-10 text-white shadow-2xl sticky top-20 h-[calc(100vh-120px)] flex flex-col border border-white/5 overflow-hidden transition-colors duration-500">
-                        <!-- Simulation Controls -->
                         <div class="mb-8 p-6 rounded-[32px] bg-white/5 border border-white/10">
                             <div class="flex items-center justify-between mb-4">
                                 <div class="flex items-center gap-3">
@@ -157,7 +214,6 @@
                                 <div class="text-[10px] font-black text-indigo-400/80 uppercase tracking-widest text-center" id="sim-time-display">Set Time: 12:00</div>
                             </div>
                         </div>
-
                         <div id="timeline-list" class="flex-1 overflow-y-auto pr-4 space-y-4 custom-scrollbar-dark px-2"></div>
                     </div>
                 </aside>
@@ -171,31 +227,50 @@
                 <div class="flex justify-between items-center mb-10 text-slate-900 dark:text-white">
                     <div>
                         <h3 class="text-3xl font-black">Profile Settings</h3>
-                        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">ปรับแต่งพื้นที่ทำงานของคุณ</p>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">ปรับแต่งโปรไฟล์และพื้นที่</p>
                     </div>
                     <button onclick="closeSettings()" class="p-4 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"><i data-lucide="x"></i></button>
                 </div>
+                
                 <div class="space-y-8 max-h-[60vh] overflow-y-auto pr-4 custom-scrollbar-dark">
+                    <!-- Banner Alignment with Preview -->
+                    <div class="space-y-4">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 block">Banner Preview & Alignment</label>
+                        <div class="preview-window">
+                            <img id="edit-banner-preview" src="" alt="Preview">
+                            <div class="preview-overlay"></div>
+                        </div>
+                        <div class="bg-slate-50 dark:bg-slate-800 px-8 py-6 rounded-[24px]">
+                            <input type="range" id="edit-banner-pos" min="0" max="100" value="50" class="w-full" oninput="previewBannerPos(this.value)">
+                            <div class="flex justify-between mt-2 text-[9px] font-black text-slate-400 uppercase">
+                                <span id="pos-label-start">Top / Left</span>
+                                <span id="pos-val-display" class="text-indigo-500">50%</span>
+                                <span id="pos-label-end">Bottom / Right</span>
+                            </div>
+                        </div>
+                    </div>
+
                     <div>
                         <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 mb-2 block">Display Name</label>
                         <input type="text" id="edit-name" class="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-indigo-100 rounded-[24px] px-8 py-5 text-lg font-bold focus:outline-none transition-all dark:text-white" placeholder="ชื่อโปรไฟล์">
                     </div>
+                    
                     <div>
                         <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 mb-2 block">Banner Image URL</label>
-                        <input type="text" id="edit-banner" class="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-indigo-100 rounded-[24px] px-8 py-5 text-sm font-medium focus:outline-none transition-all dark:text-white" placeholder="https://images.unsplash.com/...">
+                        <input type="text" id="edit-banner" oninput="updatePreviewImage(this.value)" class="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-indigo-100 rounded-[24px] px-8 py-5 text-sm font-medium focus:outline-none transition-all dark:text-white" placeholder="URL ของรูปภาพ...">
                     </div>
-                    <div class="grid grid-cols-2 gap-6">
-                        <div>
-                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 mb-2 block">Theme Color</label>
-                            <div class="flex items-center gap-4 bg-slate-50 dark:bg-slate-800 p-4 rounded-[24px]">
-                                <input type="color" id="edit-color" class="w-12 h-12 border-none bg-transparent cursor-pointer">
-                                <span class="text-sm font-bold text-slate-400 uppercase" id="color-hex-display">#000000</span>
-                            </div>
+
+                    <div>
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 mb-2 block">Theme Color</label>
+                        <div class="flex items-center gap-4 bg-slate-50 dark:bg-slate-800 p-4 rounded-[24px]">
+                            <input type="color" id="edit-color" class="w-12 h-12 border-none bg-transparent cursor-pointer">
+                            <span class="text-sm font-bold text-slate-400 uppercase" id="color-hex-display">#000000</span>
                         </div>
                     </div>
+
                     <div class="pt-4 flex gap-4">
                         <button onclick="deleteProfile()" class="flex-1 py-5 bg-rose-50 dark:bg-rose-900/20 text-rose-500 rounded-[28px] text-base font-black transition-all">ลบโปรไฟล์</button>
-                        <button onclick="saveSettings()" class="flex-[2] py-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-[28px] text-base font-black shadow-lg shadow-indigo-200 transition-all">บันทึกการเปลี่ยนแปลง</button>
+                        <button onclick="saveSettings()" class="flex-[2] py-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-[28px] text-base font-black shadow-lg shadow-indigo-200 transition-all">บันทึก</button>
                     </div>
                 </div>
             </div>
@@ -204,7 +279,7 @@
 
     <script>
         let profiles = [
-            { id: 'p1', name: 'คุณบอล', themeColor: '#6366f1', banner: 'https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&w=1200&q=80' }
+            { id: 'p1', name: 'คุณบอล', themeColor: '#6366f1', banner: 'https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&w=1200&q=80', bannerPos: 50 }
         ];
         let activeProfileIdx = 0;
         let currentDate = new Date();
@@ -216,7 +291,6 @@
         let isDarkMode = false;
 
         window.onload = () => { 
-            // Load theme
             if (localStorage.getItem('theme') === 'dark') toggleDarkMode(true);
             renderAll(); 
             lucide.createIcons(); 
@@ -236,7 +310,7 @@
             icon.setAttribute('data-lucide', isDarkMode ? 'sun' : 'moon');
             localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
             lucide.createIcons();
-            renderCalendar(); // Refresh calendar for border/text updates
+            renderCalendar(); 
         }
 
         function renderAll() {
@@ -246,27 +320,6 @@
             renderTimeline();
             renderNote();
             lucide.createIcons();
-        }
-
-        function addNewProfile() {
-            const newId = 'p' + Date.now();
-            profiles.push({
-                id: newId,
-                name: 'โปรไฟล์ใหม่',
-                themeColor: '#10b981',
-                banner: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1200&q=80'
-            });
-            activeProfileIdx = profiles.length - 1;
-            renderAll();
-            openSettings();
-        }
-
-        function deleteProfile() {
-            if (profiles.length <= 1) return;
-            profiles.splice(activeProfileIdx, 1);
-            activeProfileIdx = 0;
-            closeSettings();
-            renderAll();
         }
 
         function renderTabs() {
@@ -283,7 +336,10 @@
 
         function renderProfileHeader() {
             const p = profiles[activeProfileIdx];
-            document.getElementById('profile-banner').src = p.banner;
+            const bannerImg = document.getElementById('profile-banner');
+            bannerImg.src = p.banner;
+            bannerImg.style.objectPosition = `center ${p.bannerPos || 50}%`;
+            
             document.getElementById('workspace-tag').innerText = `Workspace: ${p.name}`;
             document.getElementById('modal-accent').style.backgroundColor = p.themeColor;
             
@@ -294,6 +350,69 @@
             document.getElementById('date-th-display').innerText = mNamesTH[currentDate.getMonth()] + ' ' + (currentDate.getFullYear() + 543);
             document.getElementById('calendar-header').innerText = mNamesEN[currentDate.getMonth()];
             document.getElementById('calendar-year-header').innerText = currentDate.getFullYear();
+        }
+
+        // Live Preview Functions
+        function updatePreviewImage(url) {
+            document.getElementById('edit-banner-preview').src = url;
+        }
+
+        function previewBannerPos(val) {
+            document.getElementById('pos-val-display').innerText = val + '%';
+            // Update Mini Preview
+            document.getElementById('edit-banner-preview').style.objectPosition = `center ${val}%`;
+            // Update Real Banner (Background)
+            document.getElementById('profile-banner').style.objectPosition = `center ${val}%`;
+        }
+
+        function openSettings() { 
+            const p = profiles[activeProfileIdx];
+            document.getElementById('edit-name').value = p.name;
+            document.getElementById('edit-banner').value = p.banner;
+            document.getElementById('edit-banner-preview').src = p.banner;
+            document.getElementById('edit-banner-pos').value = p.bannerPos || 50;
+            document.getElementById('pos-val-display').innerText = (p.bannerPos || 50) + '%';
+            document.getElementById('edit-banner-preview').style.objectPosition = `center ${p.bannerPos || 50}%`;
+            document.getElementById('edit-color').value = p.themeColor;
+            document.getElementById('color-hex-display').innerText = p.themeColor;
+            document.getElementById('settings-modal').classList.remove('hidden'); 
+        }
+
+        function closeSettings() { 
+            document.getElementById('settings-modal').classList.add('hidden'); 
+            renderProfileHeader(); // Revert if not saved
+        }
+
+        function saveSettings() { 
+            const p = profiles[activeProfileIdx];
+            p.name = document.getElementById('edit-name').value;
+            p.banner = document.getElementById('edit-banner').value;
+            p.bannerPos = parseInt(document.getElementById('edit-banner-pos').value);
+            p.themeColor = document.getElementById('edit-color').value;
+            closeSettings(); 
+            renderAll(); 
+        }
+
+        function addNewProfile() {
+            const newId = 'p' + Date.now();
+            profiles.push({
+                id: newId,
+                name: 'โปรไฟล์ใหม่',
+                themeColor: '#10b981',
+                banner: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1200&q=80',
+                bannerPos: 50
+            });
+            activeProfileIdx = profiles.length - 1;
+            renderAll();
+            openSettings();
+        }
+
+        function deleteProfile() {
+            if (profiles.length <= 1) return;
+            profiles.splice(activeProfileIdx, 1);
+            activeProfileIdx = 0;
+            closeSettings();
+            renderAll();
         }
 
         function getEffectiveTask(profileId, dateStr, hourInt) {
@@ -475,23 +594,6 @@
         }
 
         function changeMonth(dir) { currentDate.setMonth(currentDate.getMonth() + dir); renderAll(); }
-        function openSettings() { 
-            const p = profiles[activeProfileIdx];
-            document.getElementById('edit-name').value = p.name;
-            document.getElementById('edit-banner').value = p.banner;
-            document.getElementById('edit-color').value = p.themeColor;
-            document.getElementById('color-hex-display').innerText = p.themeColor;
-            document.getElementById('settings-modal').classList.remove('hidden'); 
-        }
-        function closeSettings() { document.getElementById('settings-modal').classList.add('hidden'); }
-        function saveSettings() { 
-            const p = profiles[activeProfileIdx];
-            p.name = document.getElementById('edit-name').value;
-            p.banner = document.getElementById('edit-banner').value;
-            p.themeColor = document.getElementById('edit-color').value;
-            closeSettings(); 
-            renderAll(); 
-        }
     </script>
 </body>
 </html>
