@@ -8,7 +8,7 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&family=Mitr:wght@300;400;600&display=swap');
-        
+                
         :root {
             --bg-main: #F1F5F9;
             --text-main: #1A1C21;
@@ -52,7 +52,7 @@
         }
 
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; }
-        
+                
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
 
@@ -67,32 +67,33 @@
 
         .preview-window { width: 100%; height: 120px; border-radius: 20px; overflow: hidden; position: relative; background: #eee; border: 2px solid rgba(99, 102, 241, 0.2); }
         .preview-window img { width: 100%; height: 100%; object-fit: cover; }
+
+        .holiday-dot { width: 10px; height: 10px; background-color: #ef4444; border-radius: 50%; display: inline-block; box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2); }
+        .holiday-tooltip { position: relative; }
+        .holiday-tooltip::after { content: attr(data-holiday); position: absolute; bottom: 110%; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 6px 12px; border-radius: 8px; font-size: 10px; font-weight: bold; white-space: nowrap; opacity: 0; visibility: hidden; transition: all 0.2s ease; z-index: 50; pointer-events: none; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        .holiday-tooltip:hover::after, .holiday-tooltip:active::after { opacity: 1; visibility: visible; bottom: 125%; }
+
+        .color-circle { width: 24px; height: 24px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.2); cursor: pointer; padding: 0; overflow: hidden; appearance: none; -webkit-appearance: none; }
+        .color-circle::-webkit-color-swatch-wrapper { padding: 0; }
+        .color-circle::-webkit-color-swatch { border: none; }
     </style>
 </head>
 <body>
-
     <div id="app" class="min-h-screen flex flex-col">
-        
-        <!-- HOME VIEW (Profile Selection) -->
+        <!-- HOME VIEW -->
         <div id="home-view" class="fixed inset-0 z-[100] bg-[var(--bg-main)] overflow-y-auto py-20 px-8 flex flex-col items-center">
             <div class="max-w-6xl w-full text-center mb-16 animate-fade-in">
                 <h1 class="text-6xl font-black tracking-tighter mb-4">Welcome Back</h1>
                 <p class="text-slate-500 font-bold uppercase tracking-[0.3em] text-xs">เลือกโปรไฟล์เพื่อเริ่มวางแผนวันของคุณ</p>
             </div>
-
-            <div id="profile-selection-grid" class="max-w-6xl w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-                <!-- Profile Cards will be injected here -->
-            </div>
-
+            <div id="profile-selection-grid" class="max-w-6xl w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12"></div>
             <button onclick="addNewProfile()" class="flex items-center gap-3 px-8 py-4 bg-white dark:bg-slate-800 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-[32px] text-slate-500 hover:border-indigo-500 hover:text-indigo-500 transition-all font-bold">
-                <i data-lucide="plus-circle"></i>
-                เพิ่มโปรไฟล์ใหม่
+                <i data-lucide="plus-circle"></i> เพิ่มโปรไฟล์ใหม่
             </button>
         </div>
 
         <!-- MAIN WORKSPACE VIEW -->
         <div id="workspace-view" class="hidden flex flex-col min-h-screen">
-            <!-- Top Navigation -->
             <nav class="h-16 nav-glass flex items-end px-8 gap-1 z-30 pt-2 sticky top-0">
                 <button onclick="showHome()" class="mb-1 mr-4 p-2.5 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all" title="กลับหน้าแรก">
                     <i data-lucide="home" class="w-5 h-5"></i>
@@ -104,11 +105,9 @@
             </nav>
 
             <main class="flex-1 overflow-y-auto">
-                <!-- Banner Section -->
                 <div class="relative h-72 overflow-hidden" id="banner-section">
                     <img id="profile-banner" src="" class="w-full h-full object-cover transition-all duration-700" alt="Banner">
                     <div class="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-[var(--bg-main)]"></div>
-                    
                     <div class="absolute bottom-10 left-16 flex flex-col gap-1 animate-fade-in">
                         <div class="flex items-center gap-2 mb-2">
                             <span id="workspace-tag" class="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-black text-white uppercase tracking-widest border border-white/20">Workspace</span>
@@ -119,8 +118,6 @@
                             <span class="text-3xl font-bold opacity-70 tracking-tight" id="date-th-display"></span>
                         </div>
                     </div>
-
-                    <!-- Theme & Settings Controls -->
                     <div class="absolute top-10 right-16 flex gap-3">
                         <button id="theme-toggle" onclick="toggleDarkMode()" class="p-4 glass-card rounded-full transition-all shadow-xl text-slate-400 hover:text-amber-400">
                             <i data-lucide="moon" id="theme-icon"></i>
@@ -131,7 +128,6 @@
                     </div>
                 </div>
 
-                <!-- Main Content Area -->
                 <div class="px-16 pb-20 -mt-8 grid grid-cols-1 xl:grid-cols-12 gap-8 relative z-10">
                     <section class="xl:col-span-7 flex flex-col gap-8">
                         <!-- Calendar -->
@@ -148,13 +144,23 @@
                         </div>
 
                         <!-- Journal -->
-                        <div class="glass-card rounded-[48px] p-10 shadow-sm flex flex-col">
+                        <div id="journal-container" class="glass-card rounded-[48px] p-10 shadow-sm flex flex-col">
                             <div class="flex items-center justify-between mb-8">
                                 <div class="flex items-center gap-4">
                                     <div class="p-4 bg-amber-400/10 text-amber-600 rounded-[24px]"><i data-lucide="sticky-note"></i></div>
                                     <div>
                                         <h3 class="text-xl font-black tracking-tight">Journal & Notes</h3>
                                         <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">บันทึกและความคิด</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <div class="flex flex-col items-center">
+                                        <span class="text-[8px] font-bold text-slate-400 uppercase mb-1">Text</span>
+                                        <input type="color" id="note-text-color" oninput="saveNote()" class="color-circle">
+                                    </div>
+                                    <div class="flex flex-col items-center">
+                                        <span class="text-[8px] font-bold text-slate-400 uppercase mb-1">Bg</span>
+                                        <input type="color" id="note-bg-color" oninput="saveNote()" class="color-circle">
                                     </div>
                                 </div>
                             </div>
@@ -196,20 +202,12 @@
                     <h3 class="text-3xl font-black">Profile Settings</h3>
                     <button onclick="closeSettings()" class="p-4 text-slate-400 hover:text-slate-900 dark:hover:text-white"><i data-lucide="x"></i></button>
                 </div>
-                
                 <div class="space-y-6 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar-dark">
-                    <div class="preview-window">
-                        <img id="edit-banner-preview" src="" alt="Preview">
-                    </div>
-
-                    <!-- Banner Position Control -->
+                    <div class="preview-window"><img id="edit-banner-preview" src="" alt="Preview"></div>
                     <div>
                         <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 block mb-2">Banner Position</label>
-                        <div class="px-4">
-                            <input type="range" min="0" max="100" value="50" id="edit-banner-pos" oninput="autoUpdateProfile('bannerPos', this.value)" class="w-full">
-                        </div>
+                        <div class="px-4"><input type="range" min="0" max="100" value="50" id="edit-banner-pos" oninput="autoUpdateProfile('bannerPos', this.value)" class="w-full"></div>
                     </div>
-
                     <div>
                         <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 block mb-2">Display Name</label>
                         <input type="text" id="edit-name" oninput="autoUpdateProfile('name', this.value)" class="w-full bg-slate-50 dark:bg-slate-800 rounded-[24px] px-8 py-5 text-lg font-bold focus:outline-none transition-all dark:text-white" placeholder="Profile Name">
@@ -218,7 +216,10 @@
                         <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 block mb-2">Banner URL</label>
                         <input type="text" id="edit-banner" oninput="autoUpdateProfile('banner', this.value)" class="w-full bg-slate-50 dark:bg-slate-800 rounded-[24px] px-8 py-5 text-sm font-medium focus:outline-none transition-all dark:text-white" placeholder="https://image-url.com">
                     </div>
-                    
+                    <div>
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 block mb-2">Profile Accent Color</label>
+                        <div class="px-4"><input type="color" id="edit-theme-color" oninput="autoUpdateProfile('themeColor', this.value)" class="w-full h-10 rounded-xl cursor-pointer"></div>
+                    </div>
                     <div class="flex items-center gap-4 p-6 bg-slate-50 dark:bg-slate-800/50 rounded-[28px] border border-slate-100 dark:border-slate-800">
                         <div class="flex-1">
                             <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Status</span>
@@ -226,29 +227,30 @@
                         </div>
                         <button onclick="deleteProfile()" class="px-6 py-3 bg-rose-50 dark:bg-rose-900/20 text-rose-500 rounded-xl font-black text-xs hover:bg-rose-100 transition-colors">Delete Profile</button>
                     </div>
-
                     <button onclick="closeSettings()" class="w-full py-5 bg-indigo-600 text-white rounded-[28px] font-black shadow-lg shadow-indigo-200">Done</button>
                 </div>
             </div>
         </div>
-
     </div>
 
     <script>
-        // State
+        // --- State Management ---
         let profiles = [{ id: 'p1', name: 'Main Planner', themeColor: '#6366f1', banner: 'https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&w=1200&q=80', bannerPos: 50 }];
         let activeProfileIdx = 0;
         let dailyTasks = {};
         let dailyNotes = {};
         let isDarkMode = false;
-        let viewMode = 'home'; 
-        
+        let viewMode = 'home';
         let currentDate = new Date();
         let selectedDate = new Date();
         let isTestMode = false;
         let mockTimeHour = new Date().getHours();
 
-        // Storage
+        const thaiHolidays = {
+            "1-1": "วันขึ้นปีใหม่", "16-1": "วันครู", "2-2": "วันเกษตรแห่งชาติ", "14-2": "วันแห่งความรัก", "6-4": "วันจักรี", "13-4": "วันสงกรานต์", "14-4": "วันสงกรานต์", "15-4": "วันสงกรานต์", "1-5": "วันแรงงานแห่งชาติ", "4-5": "วันฉัตรมงคล", "3-6": "วันเฉลิมพระชนมพรรษาพระราชินี", "28-7": "วันเฉลิมพระชนมพรรษา ร.10", "1-8": "วันอาสาฬหบูชา", "2-8": "วันเข้าพรรษา", "12-8": "วันแม่แห่งชาติ", "13-10": "วันคล้ายวันสวรรคต ร.9", "23-10": "วันปิยมหาราช", "5-12": "วันพ่อแห่งชาติ", "10-12": "วันรัฐธรรมนูญ", "25-12": "วันคริสต์มาส", "31-12": "วันสิ้นปี"
+        };
+
+        // --- Core Functions ---
         function saveToLocalStorage() {
             const data = { profiles, activeProfileIdx, dailyTasks, dailyNotes, isDarkMode, viewMode };
             localStorage.setItem('workspace_planner_v2', JSON.stringify(data));
@@ -257,28 +259,19 @@
         function loadFromLocalStorage() {
             const saved = localStorage.getItem('workspace_planner_v2');
             if (saved) {
-                const data = JSON.parse(saved);
-                profiles = data.profiles || profiles;
-                activeProfileIdx = data.activeProfileIdx || 0;
-                dailyTasks = data.dailyTasks || {};
-                dailyNotes = data.dailyNotes || {};
-                isDarkMode = data.isDarkMode || false;
-                viewMode = data.viewMode || 'home';
-                if (isDarkMode) toggleDarkMode(true);
+                try {
+                    const data = JSON.parse(saved);
+                    profiles = data.profiles || profiles;
+                    activeProfileIdx = data.activeProfileIdx || 0;
+                    dailyTasks = data.dailyTasks || {};
+                    dailyNotes = data.dailyNotes || {};
+                    isDarkMode = data.isDarkMode || false;
+                    viewMode = data.viewMode || 'home';
+                    if (isDarkMode) toggleDarkMode(true);
+                } catch (e) { console.error("Failed to parse local storage", e); }
             }
         }
 
-        window.onload = () => {
-            loadFromLocalStorage();
-            if (viewMode === 'workspace') {
-                showWorkspace(activeProfileIdx);
-            } else {
-                showHome();
-            }
-            lucide.createIcons();
-        };
-
-        // UI View Logic
         function showHome() {
             viewMode = 'home';
             saveToLocalStorage();
@@ -298,6 +291,7 @@
 
         function renderHomeProfiles() {
             const grid = document.getElementById('profile-selection-grid');
+            if (!grid) return;
             grid.innerHTML = '';
             profiles.forEach((p, idx) => {
                 const card = document.createElement('div');
@@ -307,8 +301,8 @@
                     <div class="h-32 bg-slate-200 overflow-hidden relative">
                         <img src="${p.banner}" class="w-full h-full object-cover" style="object-position: center ${p.bannerPos || 50}%">
                         <div class="absolute inset-0 bg-black/20"></div>
-                        <div class="absolute bottom-4 left-6 flex items-center gap-2">
-                             <div class="w-3 h-3 rounded-full" style="background: ${p.themeColor}"></div>
+                        <div class="absolute bottom-4 left-6 flex items-center gap-2"> 
+                             <div class="w-3 h-3 rounded-full" style="background: ${p.themeColor}"></div> 
                              <span class="text-white text-xs font-black uppercase tracking-widest">Active Profile</span>
                         </div>
                     </div>
@@ -333,6 +327,7 @@
 
         function renderTabs() {
             const container = document.getElementById('tabs-container');
+            if (!container) return;
             container.innerHTML = '';
             profiles.forEach((p, idx) => {
                 const btn = document.createElement('button');
@@ -346,46 +341,61 @@
         function renderProfileHeader() {
             const p = profiles[activeProfileIdx];
             const bannerImg = document.getElementById('profile-banner');
-            bannerImg.src = p.banner;
-            bannerImg.style.objectPosition = `center ${p.bannerPos || 50}%`;
-            document.getElementById('workspace-tag').innerText = `Workspace: ${p.name}`;
-            
+            if (bannerImg) {
+                bannerImg.src = p.banner;
+                bannerImg.style.objectPosition = `center ${p.bannerPos || 50}%`;
+            }
+            const tag = document.getElementById('workspace-tag');
+            if (tag) tag.innerText = `Workspace: ${p.name}`;
             const mNamesEN = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
             const mNamesTH = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
-            
-            document.getElementById('date-en-display').innerText = mNamesEN[currentDate.getMonth()] + ' ' + currentDate.getFullYear();
-            document.getElementById('date-th-display').innerText = mNamesTH[currentDate.getMonth()] + ' ' + (currentDate.getFullYear() + 543);
-            document.getElementById('calendar-header').innerText = mNamesEN[currentDate.getMonth()];
-            document.getElementById('calendar-year-header').innerText = currentDate.getFullYear();
+            const enDisp = document.getElementById('date-en-display');
+            if (enDisp) enDisp.innerText = mNamesEN[currentDate.getMonth()] + ' ' + currentDate.getFullYear();
+            const thDisp = document.getElementById('date-th-display');
+            if (thDisp) thDisp.innerText = mNamesTH[currentDate.getMonth()] + ' ' + (currentDate.getFullYear() + 543);
+            const calHeader = document.getElementById('calendar-header');
+            if (calHeader) calHeader.innerText = mNamesEN[currentDate.getMonth()];
+            const calYear = document.getElementById('calendar-year-header');
+            if (calYear) calYear.innerText = currentDate.getFullYear();
         }
 
-        // Real-time Update Logic for Profile Settings
         function autoUpdateProfile(field, value) {
             const p = profiles[activeProfileIdx];
             p[field] = value;
-            
-            // Preview Update
             if (field === 'banner') {
                 document.getElementById('edit-banner-preview').src = value;
                 document.getElementById('profile-banner').src = value;
             }
-
             if (field === 'bannerPos') {
                 document.getElementById('edit-banner-preview').style.objectPosition = `center ${value}%`;
                 document.getElementById('profile-banner').style.objectPosition = `center ${value}%`;
             }
-            
-            // Header/Tab Update
             if (field === 'name') {
                 document.getElementById('workspace-tag').innerText = `Workspace: ${value}`;
                 renderTabs();
             }
-
+            if (field === 'themeColor') {
+                document.getElementById('modal-accent').style.backgroundColor = value;
+                renderTabs();
+            }
             saveToLocalStorage();
+        }
+
+        function getResolvedTaskForHour(profileId, dateStr, hour) {
+            let lastFoundTask = null;
+            for (let i = 0; i <= hour; i++) {
+                const key = `${profileId}-${dateStr}-${i.toString().padStart(2, '0')}:00`;
+                const task = dailyTasks[key];
+                if (task && task.content && task.content.trim() !== "") {
+                    lastFoundTask = task;
+                }
+            }
+            return lastFoundTask;
         }
 
         function renderCalendar() {
             const container = document.getElementById('calendar-body');
+            if (!container) return;
             container.innerHTML = '';
             const p = profiles[activeProfileIdx];
             const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay();
@@ -397,16 +407,20 @@
             for (let day = 1; day <= daysInMonth; day++) {
                 const dObj = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
                 const dStr = dObj.toDateString();
-                const taskKey = `${p.id}-${dStr}-${currentHour.toString().padStart(2, '0')}:00`;
-                const task = dailyTasks[taskKey];
+                const resolvedTask = getResolvedTaskForHour(p.id, dStr, currentHour);
                 
+                const holidayKey = `${day}-${dObj.getMonth() + 1}`;
+                const holidayName = thaiHolidays[holidayKey];
                 const btn = document.createElement('button');
-                btn.className = `h-32 p-4 rounded-[32px] border-2 transition-all text-left ${selectedDate.toDateString() === dStr ? 'bg-[var(--bg-main)] border-slate-900 dark:border-indigo-400' : 'bg-white/5 border-transparent hover:bg-white/10'}`;
+                btn.className = `h-32 p-4 rounded-[32px] border-2 transition-all text-left relative flex flex-col ${selectedDate.toDateString() === dStr ? 'bg-[var(--bg-main)] border-slate-900 dark:border-indigo-400' : 'bg-white/5 border-transparent hover:bg-white/10'}`;
                 btn.onclick = () => { selectedDate = dObj; renderAll(); };
                 btn.innerHTML = `
-                    <div class="text-sm font-black mb-2">${day}</div>
-                    <div class="flex-1">
-                        ${task ? `<div class="text-[9px] font-bold p-1 rounded-lg text-center truncate" style="background: ${task.bg}; color: ${task.color}">${task.content}</div>` : ''}
+                    <div class="flex items-center gap-2 mb-2">
+                        <div class="text-sm font-black">${day}</div>
+                        ${holidayName ? `<div class="holiday-dot holiday-tooltip" data-holiday="${holidayName}"></div>` : ''}
+                    </div>
+                    <div class="flex-1 w-full flex items-center justify-center overflow-hidden">
+                        ${resolvedTask ? `<div id="cal-badge-${dStr}" class="w-full py-2.5 px-3 rounded-2xl text-[11px] font-black text-center shadow-md leading-tight break-words flex items-center justify-center min-h-[50px] animate-fade-in" style="background: ${resolvedTask.bg}; color: ${resolvedTask.textColor || '#ffffff'}">${resolvedTask.content}</div>` : ''}
                     </div>
                 `;
                 container.appendChild(btn);
@@ -415,54 +429,138 @@
 
         function renderTimeline() {
             const container = document.getElementById('timeline-list');
+            if (!container) return;
             container.innerHTML = '';
             const p = profiles[activeProfileIdx];
             const currentHour = isTestMode ? parseInt(mockTimeHour) : new Date().getHours();
+            const dateStr = selectedDate.toDateString();
 
             for(let i=0; i<24; i++) {
                 const hStr = `${i.toString().padStart(2, '0')}:00`;
-                const key = `${p.id}-${selectedDate.toDateString()}-${hStr}`;
-                const task = dailyTasks[key] || { content: '', color: '#ffffff', bg: p.themeColor };
-                
+                const key = `${p.id}-${dateStr}-${hStr}`;
+                const storedTask = dailyTasks[key];
+                const hasInput = storedTask && storedTask.content && storedTask.content.trim() !== "";
+                const resolvedTask = getResolvedTaskForHour(p.id, dateStr, i);
+                const displayContent = hasInput ? storedTask.content : (resolvedTask ? resolvedTask.content : '');
+                const isInherited = !hasInput && resolvedTask;
+
                 const div = document.createElement('div');
-                div.className = `flex gap-5 p-5 rounded-[32px] border transition-all ${i === currentHour && selectedDate.toDateString() === new Date().toDateString() ? 'bg-indigo-600/20 border-indigo-500/40' : 'border-transparent'}`;
+                div.className = `flex flex-col gap-2 p-5 rounded-[32px] border transition-all ${i === currentHour && dateStr === new Date().toDateString() ? 'bg-indigo-600/20 border-indigo-500/40' : 'border-transparent'}`;
                 div.innerHTML = `
-                    <div class="text-[11px] font-black w-10 text-right pt-1.5 text-slate-500">${hStr}</div>
-                    <div class="flex-1">
-                        <input type="text" value="${task.content}" oninput="updateTask(${i}, this.value)" class="w-full bg-transparent text-sm font-bold focus:outline-none dark:text-white" placeholder="...">
+                    <div class="flex items-center gap-5">
+                        <div class="text-[11px] font-black w-10 text-right pt-1.5 text-slate-500">${hStr}</div>
+                        <div class="flex-1">
+                            <input type="text" id="input-${i}" value="${hasInput ? storedTask.content : ''}" 
+                                oninput="updateTask(${i}, this.value, 'content')" 
+                                class="w-full bg-transparent text-sm font-bold focus:outline-none dark:text-white" 
+                                placeholder="${isInherited ? displayContent : '...'}">
+                            <div id="inherited-label-${i}" class="text-[9px] font-bold text-slate-500/60 uppercase tracking-tighter mt-1 italic ${!isInherited ? 'hidden' : ''}">
+                                สืบทอดจากกิจกรรมก่อนหน้า: ${displayContent}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-end gap-3 mt-1">
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-[8px] font-black text-slate-500 uppercase">Text</span>
+                            <input type="color" id="color-text-${i}" value="${hasInput ? (storedTask.textColor || '#ffffff') : '#ffffff'}" oninput="updateTask(${i}, this.value, 'textColor')" class="color-circle !w-4 !h-4">
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-[8px] font-black text-slate-500 uppercase">Bg</span>
+                            <input type="color" id="color-bg-${i}" value="${hasInput ? storedTask.bg : p.themeColor}" oninput="updateTask(${i}, this.value, 'bg')" class="color-circle !w-4 !h-4">
+                        </div>
                     </div>
                 `;
                 container.appendChild(div);
             }
         }
 
-        function updateTask(hour, val) {
+        // --- Improved Update Function ---
+        function updateTask(hour, val, field) {
             const p = profiles[activeProfileIdx];
-            const key = `${p.id}-${selectedDate.toDateString()}-${hour.toString().padStart(2, '0')}:00`;
-            dailyTasks[key] = { content: val, color: '#ffffff', bg: p.themeColor };
+            const dateStr = selectedDate.toDateString();
+            const key = `${p.id}-${dateStr}-${hour.toString().padStart(2, '0')}:00`;
+            
+            if (!dailyTasks[key]) {
+                dailyTasks[key] = { content: '', textColor: '#ffffff', bg: p.themeColor };
+            }
+            dailyTasks[key][field] = val;
             saveToLocalStorage();
+
+            // เฉพาะส่วนที่ต้องอัปเดตแบบ Real-time โดยไม่ Re-render ทั้งหมดเพื่อไม่ให้ Focus หลุด
+            const currentHourInSim = isTestMode ? parseInt(mockTimeHour) : new Date().getHours();
+            
+            // อัปเดตตรรกะ Carry-over ในชั่วโมงถัดๆ ไป (เฉพาะ Label และ Placeholder)
+            for (let i = hour; i < 24; i++) {
+                const targetInput = document.getElementById(`input-${i}`);
+                const targetLabel = document.getElementById(`inherited-label-${i}`);
+                if (!targetInput) continue;
+
+                const stored = dailyTasks[`${p.id}-${dateStr}-${i.toString().padStart(2, '0')}:00`];
+                const hasOwnContent = stored && stored.content && stored.content.trim() !== "";
+                const res = getResolvedTaskForHour(p.id, dateStr, i);
+
+                if (!hasOwnContent && res) {
+                    targetInput.placeholder = res.content;
+                    if (targetLabel) {
+                        targetLabel.classList.remove('hidden');
+                        targetLabel.innerText = `สืบทอดจากกิจกรรมก่อนหน้า: ${res.content}`;
+                    }
+                } else if (hasOwnContent || !res) {
+                    if (targetLabel) targetLabel.classList.add('hidden');
+                    if (!res) targetInput.placeholder = "...";
+                }
+            }
+
+            // อัปเดตปฏิทินในช่องวันที่เลือก
+            const calBadge = document.getElementById(`cal-badge-${dateStr}`);
+            if (calBadge) {
+                const finalRes = getResolvedTaskForHour(p.id, dateStr, currentHourInSim);
+                if (finalRes) {
+                    calBadge.innerText = finalRes.content;
+                    calBadge.style.background = finalRes.bg;
+                    calBadge.style.color = finalRes.textColor || '#ffffff';
+                } else {
+                    calBadge.parentElement.innerHTML = '';
+                }
+            }
         }
 
         function saveNote() {
             const p = profiles[activeProfileIdx];
             const key = `${p.id}-${selectedDate.toDateString()}-note`;
-            dailyNotes[key] = { content: document.getElementById('daily-note-area').value };
-            saveToLocalStorage();
+            const area = document.getElementById('daily-note-area');
+            const bgColor = document.getElementById('note-bg-color').value;
+            const textColor = document.getElementById('note-text-color').value;
+            if (area) {
+                dailyNotes[key] = { content: area.value, bg: bgColor, color: textColor };
+                const container = document.getElementById('journal-container');
+                if (container) { container.style.backgroundColor = bgColor; area.style.color = textColor; }
+                saveToLocalStorage();
+            }
         }
 
         function renderNote() {
             const p = profiles[activeProfileIdx];
             const key = `${p.id}-${selectedDate.toDateString()}-note`;
-            document.getElementById('daily-note-area').value = dailyNotes[key]?.content || '';
+            const area = document.getElementById('daily-note-area');
+            const bgInput = document.getElementById('note-bg-color');
+            const textInput = document.getElementById('note-text-color');
+            const container = document.getElementById('journal-container');
+            const data = dailyNotes[key] || { content: '', bg: isDarkMode ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.8)', color: isDarkMode ? '#F1F5F9' : '#1A1C21' };
+            if (area) { area.value = data.content || ''; area.style.color = data.color; }
+            if (bgInput) bgInput.value = data.bg.startsWith('rgba') ? '#ffffff' : data.bg; 
+            if (textInput) textInput.value = data.color.startsWith('#') ? data.color : '#000000';
+            if (container) { container.style.backgroundColor = data.bg; }
         }
 
         function toggleDarkMode(force = null) {
             isDarkMode = force !== null ? force : !isDarkMode;
             document.body.classList.toggle('dark-mode', isDarkMode);
-            saveToLocalStorage();
+            const icon = document.getElementById('theme-icon');
+            if(icon) { icon.setAttribute('data-lucide', isDarkMode ? 'sun' : 'moon'); lucide.createIcons(); }
+            saveToLocalStorage(); renderNote();
         }
 
-        // Profile Management
         function addNewProfile() {
             const id = 'p' + Date.now();
             profiles.push({ id, name: 'New Planner', themeColor: '#10b981', banner: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1200&q=80', bannerPos: 50 });
@@ -476,35 +574,52 @@
             document.getElementById('edit-name').value = p.name;
             document.getElementById('edit-banner').value = p.banner;
             document.getElementById('edit-banner-pos').value = p.bannerPos || 50;
+            document.getElementById('edit-theme-color').value = p.themeColor;
             document.getElementById('edit-banner-preview').src = p.banner;
             document.getElementById('edit-banner-preview').style.objectPosition = `center ${p.bannerPos || 50}%`;
+            document.getElementById('modal-accent').style.backgroundColor = p.themeColor;
             document.getElementById('settings-modal').classList.remove('hidden');
         }
 
-        function closeSettings() { 
-            document.getElementById('settings-modal').classList.add('hidden'); 
-            renderHomeProfiles(); 
+        function closeSettings() {
+            document.getElementById('settings-modal').classList.add('hidden');
+            if(viewMode === 'home') renderHomeProfiles();
+            else renderAll();
         }
 
         function deleteProfile() {
             if (profiles.length <= 1) return;
             profiles.splice(activeProfileIdx, 1);
-            showHome();
-            closeSettings();
+            activeProfileIdx = 0;
+            showHome(); closeSettings();
         }
 
         function changeMonth(dir) { currentDate.setMonth(currentDate.getMonth() + dir); renderAll(); }
-        function toggleTestMode() { 
-            isTestMode = !isTestMode; 
+
+        function toggleTestMode() {
+            isTestMode = !isTestMode;
             document.getElementById('sim-slider-container').classList.toggle('hidden', !isTestMode);
-            renderTimeline();
+            const circle = document.getElementById('toggle-circle');
+            if (circle) {
+                if(isTestMode) { circle.style.transform = 'translateX(24px)'; document.getElementById('test-mode-toggle').classList.add('bg-indigo-600'); }
+                else { circle.style.transform = 'translateX(0)'; document.getElementById('test-mode-toggle').classList.remove('bg-indigo-600'); }
+            }
+            renderTimeline(); renderCalendar();
         }
+
         function updateSimHour(val) {
             mockTimeHour = val;
-            document.getElementById('sim-time-display').innerText = `Set Time: ${val.toString().padStart(2, '0')}:00`;
-            renderTimeline();
-            renderCalendar();
+            const disp = document.getElementById('sim-time-display');
+            if (disp) disp.innerText = `Set Time: ${val.toString().padStart(2, '0')}:00`;
+            renderTimeline(); renderCalendar();
         }
+
+        window.onload = function() {
+            loadFromLocalStorage();
+            if (viewMode === 'workspace') showWorkspace(activeProfileIdx);
+            else showHome();
+            lucide.createIcons();
+        };
     </script>
 </body>
 </html>
