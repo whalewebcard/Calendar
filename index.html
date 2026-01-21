@@ -80,7 +80,6 @@
             box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
         }
 
-        /* Preview Window Styling */
         .preview-window {
             width: 100%;
             height: 120px;
@@ -114,7 +113,7 @@
         }
     </style>
 </head>
-<body class="">
+<body>
 
     <div id="app" class="flex flex-col min-h-screen">
         <!-- Top Navigation -->
@@ -233,7 +232,6 @@
                 </div>
                 
                 <div class="space-y-8 max-h-[60vh] overflow-y-auto pr-4 custom-scrollbar-dark">
-                    <!-- Banner Alignment with Preview -->
                     <div class="space-y-4">
                         <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 block">Banner Preview & Alignment</label>
                         <div class="preview-window">
@@ -278,20 +276,53 @@
     </div>
 
     <script>
+        // Default Data
         let profiles = [
             { id: 'p1', name: 'คุณบอล', themeColor: '#6366f1', banner: 'https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&w=1200&q=80', bannerPos: 50 }
         ];
         let activeProfileIdx = 0;
-        let currentDate = new Date();
-        let selectedDate = new Date();
         let dailyTasks = {};
         let dailyNotes = {};
+        
+        let currentDate = new Date();
+        let selectedDate = new Date();
         let isTestMode = false;
         let mockTimeHour = new Date().getHours();
         let isDarkMode = false;
 
+        // --- Persistent Storage Logic ---
+        function saveToLocalStorage() {
+            const data = {
+                profiles,
+                activeProfileIdx,
+                dailyTasks,
+                dailyNotes,
+                isDarkMode
+            };
+            localStorage.setItem('workspace_planner_data', JSON.stringify(data));
+        }
+
+        function loadFromLocalStorage() {
+            const saved = localStorage.getItem('workspace_planner_data');
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    profiles = data.profiles || profiles;
+                    activeProfileIdx = data.activeProfileIdx !== undefined ? data.activeProfileIdx : 0;
+                    dailyTasks = data.dailyTasks || {};
+                    dailyNotes = data.dailyNotes || {};
+                    isDarkMode = data.isDarkMode || false;
+                    
+                    // Apply theme
+                    if (isDarkMode) toggleDarkMode(true);
+                } catch (e) {
+                    console.error("Error loading data", e);
+                }
+            }
+        }
+
         window.onload = () => { 
-            if (localStorage.getItem('theme') === 'dark') toggleDarkMode(true);
+            loadFromLocalStorage();
             renderAll(); 
             lucide.createIcons(); 
             setInterval(() => { if(!isTestMode) updateCurrentHighlights(); }, 60000); 
@@ -307,9 +338,11 @@
             isDarkMode = force !== null ? force : !isDarkMode;
             document.body.classList.toggle('dark-mode', isDarkMode);
             const icon = document.getElementById('theme-icon');
-            icon.setAttribute('data-lucide', isDarkMode ? 'sun' : 'moon');
-            localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
-            lucide.createIcons();
+            if (icon) {
+                icon.setAttribute('data-lucide', isDarkMode ? 'sun' : 'moon');
+                lucide.createIcons();
+            }
+            saveToLocalStorage();
             renderCalendar(); 
         }
 
@@ -328,13 +361,14 @@
             profiles.forEach((p, idx) => {
                 const btn = document.createElement('button');
                 btn.className = `relative h-11 px-6 flex items-center gap-2.5 rounded-t-2xl transition-all text-xs font-black ${activeProfileIdx === idx ? 'bg-[var(--card-bg)] text-[var(--text-main)] shadow-sm z-10' : 'text-slate-400 hover:text-slate-600'}`;
-                btn.onclick = () => { activeProfileIdx = idx; renderAll(); };
+                btn.onclick = () => { activeProfileIdx = idx; saveToLocalStorage(); renderAll(); };
                 btn.innerHTML = `<div class="w-2 h-2 rounded-full" style="background-color: ${p.themeColor}"></div><span>${p.name}</span>`;
                 container.appendChild(btn);
             });
         }
 
         function renderProfileHeader() {
+            if (!profiles[activeProfileIdx]) activeProfileIdx = 0;
             const p = profiles[activeProfileIdx];
             const bannerImg = document.getElementById('profile-banner');
             bannerImg.src = p.banner;
@@ -352,16 +386,13 @@
             document.getElementById('calendar-year-header').innerText = currentDate.getFullYear();
         }
 
-        // Live Preview Functions
         function updatePreviewImage(url) {
             document.getElementById('edit-banner-preview').src = url;
         }
 
         function previewBannerPos(val) {
             document.getElementById('pos-val-display').innerText = val + '%';
-            // Update Mini Preview
             document.getElementById('edit-banner-preview').style.objectPosition = `center ${val}%`;
-            // Update Real Banner (Background)
             document.getElementById('profile-banner').style.objectPosition = `center ${val}%`;
         }
 
@@ -380,7 +411,7 @@
 
         function closeSettings() { 
             document.getElementById('settings-modal').classList.add('hidden'); 
-            renderProfileHeader(); // Revert if not saved
+            renderProfileHeader(); 
         }
 
         function saveSettings() { 
@@ -389,6 +420,7 @@
             p.banner = document.getElementById('edit-banner').value;
             p.bannerPos = parseInt(document.getElementById('edit-banner-pos').value);
             p.themeColor = document.getElementById('edit-color').value;
+            saveToLocalStorage();
             closeSettings(); 
             renderAll(); 
         }
@@ -403,6 +435,7 @@
                 bannerPos: 50
             });
             activeProfileIdx = profiles.length - 1;
+            saveToLocalStorage();
             renderAll();
             openSettings();
         }
@@ -411,6 +444,7 @@
             if (profiles.length <= 1) return;
             profiles.splice(activeProfileIdx, 1);
             activeProfileIdx = 0;
+            saveToLocalStorage();
             closeSettings();
             renderAll();
         }
@@ -428,6 +462,7 @@
 
         function renderCalendar() {
             const container = document.getElementById('calendar-body');
+            if(!container) return;
             container.innerHTML = '';
             const p = profiles[activeProfileIdx];
             const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay();
@@ -459,6 +494,7 @@
 
         function renderTimeline() {
             const container = document.getElementById('timeline-list');
+            if(!container) return;
             container.innerHTML = '';
             const p = profiles[activeProfileIdx];
             const dStr = selectedDate.toDateString();
@@ -503,6 +539,7 @@
             if (!dailyTasks[key]) dailyTasks[key] = { content: '', color: '#ffffff', bg: p.themeColor };
             dailyTasks[key][prop] = value;
             if (prop === 'color') document.getElementById(`input-${hour}`).style.color = value;
+            saveToLocalStorage();
             updateForwardLabels();
             debouncedRenderCalendar();
         }
@@ -513,6 +550,7 @@
             for (let i = 0; i < 24; i++) {
                 const label = document.getElementById(`forward-label-${i}`);
                 const input = document.getElementById(`input-${i}`);
+                if(!label || !input) continue;
                 const effective = getEffectiveTask(p.id, dStr, i);
                 if (effective && effective.isForwarded) {
                     label.innerText = `ส่งต่อจาก ${effective.hour}:00: ${effective.content}`;
@@ -541,6 +579,7 @@
                 color: document.getElementById('note-text-color').value,
                 bg: document.getElementById('note-bg-color').value
             };
+            saveToLocalStorage();
         }
 
         function updateNoteStyle() {
